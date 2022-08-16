@@ -1,0 +1,5 @@
+<Context>
+    <!-- lax = The browser sends the cookie only along with GET requests initiated by third party websites.
+         strict = The browser does not send the cookie along with requests initiated by third party websites. -->
+    <CookieProcessor sameSiteCookies="lax" />
+</Context>

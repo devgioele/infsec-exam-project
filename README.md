@@ -1,6 +1,20 @@
 # Information Security Project 2021/2022
 
-Made at the [Free University of Bolzano](https://unibz.it). 
+An email server and client implemented with Tomcat to test hacking techniques and to understand how to defend from such attacks. 
+
+Made at the [Free University of Bolzano](https://unibz.it).
+
+## Architecture
+
+The source code of this project is not meant to be deployed as it is.
+Client and server code run on the same Tomcat instance, which would never be the case in a real-world scenario.
+
+For an actual deployment, the client and the server code would be split on two separate Tomcat instances, making the architecture look like the following.
+
+![architecture](docs/architecture.png)
+
+While the browser is referred to as the client usually, notice that here the Tomcat instance running on the user's machine is called the client.
+The browser is only used for the GUI, which is unfamiliar to modern conventions and might be confusing when first looking at the project.
 
 ## Setup
 

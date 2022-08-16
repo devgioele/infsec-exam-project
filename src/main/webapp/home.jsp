@@ -17,7 +17,11 @@
 				<br><% out.println(request.getAttribute("email")); %>
 			</p>
 	  	</div>
-	  	<div id="right"><a href="login.html">Logout</a></div>
+	  	<div id="right">
+	  	    <form action="LogoutServlet" method="post">
+                <input type="submit" name="logout" value="Logout" />
+            </form>
+        </div>
 	  </div>
 	</nav>
 	

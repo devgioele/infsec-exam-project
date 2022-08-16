@@ -18,11 +18,11 @@ public class Convert {
 	}
 
 	public static String toBase64(String str) {
-		return Base64.getEncoder().encodeToString(str.getBytes());
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(str.getBytes());
 	}
 
 	public static String fromBase64(String str) {
-		return new String(Base64.getDecoder().decode(str));
+		return new String(Base64.getUrlDecoder().decode(str));
 	}
 
 }

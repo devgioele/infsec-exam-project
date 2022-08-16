@@ -36,8 +36,9 @@ public class SendMailServlet extends HttpServlet {
 		String body = Sanitize.safeHTML(request.getParameter("body"));
 		String timestamp = new Date(System.currentTimeMillis()).toInstant().toString();
 
-		if(!Crypto.validJwt(request, email)) {
+		if(!Crypto.getInstance().validJwt(request, email)) {
 			request.getRequestDispatcher("login.html").forward(request, response);
+			return;
 		}
 
 		try {
@@ -47,6 +48,7 @@ public class SendMailServlet extends HttpServlet {
 					timestamp);
 		} catch (SQLException e) {
 			e.printStackTrace();
+			request.setAttribute("content", "The email could not be sent because of an error.");
 		}
 
 		request.setAttribute("email", email);

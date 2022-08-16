@@ -30,8 +30,9 @@ public class NavigationServlet extends HttpServlet {
 		response.setContentType("text/html");
 		String email = Sanitize.noHTML(request.getParameter("email"));
 
-		if(!Crypto.validJwt(request, email)) {
+		if(!Crypto.getInstance().validJwt(request, email)) {
 			request.getRequestDispatcher("login.html").forward(request, response);
+			return;
 		}
 
 		if (request.getParameter("newMail") != null)
@@ -78,7 +79,7 @@ public class NavigationServlet extends HttpServlet {
 
 	private String getHtmlForNewMail(String email) {
 		return "<form id=\"submitForm\" class=\"form-resize\" action=\"SendMailServlet\" " +
-				"method=\"post\">\r\n<input type=\"hidden\" name=\"sender\" value=\"" + email +
+				"method=\"post\">\r\n<input type=\"hidden\" name=\"email\" value=\"" + email +
 				"\">\r\n " +
 				"		<input class=\"single-row-input\" type=\"email\" name=\"receiver\" " +
 				"placeholder=\"Receiver\" required>\r\n" +

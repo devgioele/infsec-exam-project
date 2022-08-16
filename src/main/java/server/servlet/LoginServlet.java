@@ -34,7 +34,7 @@ public class LoginServlet extends HttpServlet {
 		try (ResultSet sqlRes = Database.query(conn,
 				"SELECT * FROM [user] WHERE email=? AND password=?", email, pwd)) {
 			if (sqlRes.next()) {
-				Crypto.setJwt(response, email);
+				Crypto.getInstance().setJwt(response, email);
 				request.setAttribute("email", sqlRes.getString(3));
 				request.setAttribute("password", sqlRes.getString(4));
 				request.setAttribute("content", "Welcome!");

@@ -1,38 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="ISO-8859-1">
-	<title>Register</title>
-	<style>
+    <meta charset="ISO-8859-1">
+    <title>Register</title>
+    <style>
 		a, p, td, input {
 			font-size: 1.2rem;
 		}
 		input {
 			height: 1.8em;
 		}
-	</style>
+
+    </style>
 </head>
 <body>
-	<form action="RegisterServlet" method="post">
-		<table>
-			<tr>
-				<td>Name:</td>
-				<td><input type="text" name="name" required></td>
-			</tr>
-			<tr>
-				<td>Surname:</td>
-				<td><input type="text" name="surname" required></td>
-			</tr>
-			<tr>
-				<td>Email address:</td>
-				<td><input type="text" name="email" required></td>
-			</tr>
-			<tr>
-				<td>Password:</td>
-				<td><input type="password" name="password" required></td>
-			</tr>
-		</table>
-		<input type="submit" value="Register">
-	</form>
+<form action="RegisterServlet" method="post">
+    <table>
+        <tr>
+            <td>Name:</td>
+            <td><input type="text" name="name" required></td>
+        </tr>
+        <tr>
+            <td>Surname:</td>
+            <td><input type="text" name="surname" required></td>
+        </tr>
+        <tr>
+            <td>Email address:</td>
+            <td><input type="text" name="email" required></td>
+        </tr>
+        <tr>
+            <td>Password:</td>
+            <td><input type="password" name="password" required></td>
+        </tr>
+    </table>
+    <input type="submit" value="Register">
+</form>
 </body>
 </html>

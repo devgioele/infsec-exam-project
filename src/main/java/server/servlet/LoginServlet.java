@@ -1,24 +1,26 @@
 package server.servlet;
 
-import crypto.Crypto;
+import http.HttpError;
+import http.Jwt;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import server.crypto.Crypto;
+import server.util.Database;
+import server.util.ServerLogger;
+import util.Sanitize;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import util.Database;
-import util.Sanitize;
+import static util.Convert.gson;
 
-@WebServlet("/LoginServlet")
+@WebServlet("/server/LoginServlet")
 public class LoginServlet extends HttpServlet {
 
-	private static final long serialVersionUID = 1L;
 	private static Connection conn;
 
 	public void init() {
@@ -26,27 +28,28 @@ public class LoginServlet extends HttpServlet {
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.setContentType("text/html");
-		String email = Sanitize.noHTML(request.getParameter("email"));
-		String pwd = Sanitize.noHTML(request.getParameter("password"));
+			throws IOException {
+		response.setContentType("application/json");
+
+		String email = Sanitize.noHtml(request.getParameter("email"));
+		String pwd = Sanitize.noHtml(request.getParameter("password"));
 
 		try (ResultSet sqlRes = Database.query(conn,
 				"SELECT * FROM [user] WHERE email=? AND password=?", email, pwd)) {
 			if (sqlRes.next()) {
-				Crypto.getInstance().setJwt(response, email);
-				request.setAttribute("email", sqlRes.getString(3));
-				request.setAttribute("password", sqlRes.getString(4));
-				request.setAttribute("content", "Welcome!");
-				System.out.println("Login succeeded!");
-				request.getRequestDispatcher("home.jsp").forward(request, response);
+				String jwt = Crypto.getInstance().genJwt(email);
+				ServerLogger.println("Login succeeded!");
+				response.getWriter().println(gson.toJson(new Jwt(jwt)));
+				response.setStatus(200);
 			} else {
-				System.out.println("Login failed!");
-				request.getRequestDispatcher("login.html").forward(request, response);
+				String msg = String.format("User '%s' does not exist!", email);
+				ServerLogger.println(msg);
+				response.getWriter().println(gson.toJson(new HttpError(msg)));
+				response.setStatus(401);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			request.getRequestDispatcher("login.html").forward(request, response);
+			response.setStatus(500);
 		}
 	}
 

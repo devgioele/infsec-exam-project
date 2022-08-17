@@ -13,8 +13,15 @@ For an actual deployment, the client and the server code would be split on two s
 
 ![architecture](docs/architecture.png)
 
-While the browser is referred to as the client usually, notice that here the Tomcat instance running on the user's machine is called the client.
+While the browser is referred to as the client usually, notice that in this case the Tomcat instance running on the user's machine is called the client.
 The browser is only used for the GUI, which is unfamiliar to modern conventions and might be confusing when first looking at the project.
+
+These rules are followed throughout the codebase to keep the client and the server apart:
+- The package `client` does not use the package `server` and vice versa.
+
+### But why?
+
+The complexity and unconventionality of this architecture can justly create some doubts on its appropriateness. The reason for this architecture was to be able to run Java on the client, use it to generate RSA keys, send to the server only the public key. Since Java cannot run in the browser, the only way to achieve this, without switching to JavaScript, is to use a local web server as "the client".
 
 ## Setup
 

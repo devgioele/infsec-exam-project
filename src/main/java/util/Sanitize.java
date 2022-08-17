@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 public class Sanitize {
 
-	private static Pattern regexEmail = Pattern.compile("^[a-zA-Z0-9_!#$%&*+/=?`~^.-]+@[a-zA-Z0-9.-]+$", Pattern.CASE_INSENSITIVE);
+	private static final Pattern regexEmail = Pattern.compile("^[a-zA-Z0-9_!#$%&*+/=?`~^.-]+@[a-zA-Z0-9.-]+$", Pattern.CASE_INSENSITIVE);
 
 	/**
 	 * Uses the RFC 5322 validation of emails, but does not allow the characters `|` and `'`.
@@ -20,11 +20,11 @@ public class Sanitize {
 		return m.find();
 	}
 
-	public static String noHTML(String str) {
+	public static String noHtml(String str) {
 		return Jsoup.clean(str, Safelist.none());
 	}
 
-	public static String safeHTML(String str) {
+	public static String safeHtml(String str) {
 		return Jsoup.clean(str, Safelist.relaxed());
 	}
 

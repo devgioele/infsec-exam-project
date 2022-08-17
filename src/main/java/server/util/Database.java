@@ -1,4 +1,4 @@
-package util;
+package server.util;
 
 import java.sql.*;
 import java.util.Properties;
@@ -23,10 +23,12 @@ public class Database {
 			connectionProps.put("password", PWD);
 			// Connect
 			return DriverManager.getConnection(DB_URL, connectionProps);
-		} catch (ClassNotFoundException | SQLException e) {
-			e.printStackTrace();
-			return null;
+		} catch (ClassNotFoundException ex) {
+			ServerLogger.printlnErr("The driver for SQL Server could not be loaded.\n" + ex);
+		} catch(SQLException ex) {
+			ServerLogger.printlnErr("Could not connect to the database.\n" + ex);
 		}
+		return null;
 	}
 
 	private static PreparedStatement compileStatement(Connection conn, String sql,
@@ -35,7 +37,7 @@ public class Database {
 		PreparedStatement st = conn.prepareStatement(sql);
 		// Set parameters
 		for (int i = 0; i < params.length; i++) {
-			// DEBUG: System.out.printf("SQL: %s%nIndex: %s%nParam: %s%n", sql, i + 1, params[i]);
+			// DEBUG: ServerLogger.printf("SQL: %s%nIndex: %s%nParam: %s%n", sql, i + 1, params[i]);
 			st.setString(i + 1, params[i]);
 		}
 		return st;

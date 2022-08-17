@@ -1,23 +1,27 @@
 package server.servlet;
 
+import http.HttpError;
+import http.Jwt;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import server.crypto.Crypto;
+import server.util.Database;
+import server.util.ServerLogger;
+import util.Sanitize;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import util.Database;
-import util.Sanitize;
+import static util.Convert.gson;
 
-@WebServlet("/RegisterServlet")
+@WebServlet("/server/RegisterServlet")
 public class RegisterServlet extends HttpServlet {
 
-	private static final long serialVersionUID = 1L;
 	private static Connection conn;
 
 	public void init() {
@@ -25,35 +29,41 @@ public class RegisterServlet extends HttpServlet {
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.setContentType("text/html");
+			throws IOException {
+		response.setContentType("application/json");
 
-		String name = Sanitize.noHTML(request.getParameter("name"));
-		String surname = Sanitize.noHTML(request.getParameter("surname"));
-		String email = Sanitize.noHTML(request.getParameter("email"));
-		String pwd = Sanitize.noHTML(request.getParameter("password"));
+		String name = Sanitize.noHtml(request.getParameter("name"));
+		String surname = Sanitize.noHtml(request.getParameter("surname"));
+		String email = Sanitize.noHtml(request.getParameter("email"));
+		String pwd = Sanitize.noHtml(request.getParameter("password"));
 
 		if (Sanitize.isEmail(email)) {
-			try (ResultSet sqlRes = Database.query(conn,
-					"SELECT * FROM [user] WHERE email=?", email)) {
+			try (ResultSet sqlRes = Database.query(conn, "SELECT * FROM [user] WHERE email=?",
+					email)) {
 				if (sqlRes.next()) {
-					System.out.println("Email already registered!");
+					String msg = String.format("Email '%s' already registered!", email);
+					ServerLogger.println(msg);
+					response.getWriter().println(gson.toJson(new HttpError(msg)));
+					response.setStatus(406);
 				} else {
 					Database.update(conn,
-							"INSERT INTO [user] ( name, surname, email, password ) " +
+							"INSERT INTO [user] ( name, surname, email, password )" + " " +
 									"VALUES ( ?, ?, ?, ? )", name, surname, email, pwd);
-					request.setAttribute("email", email);
-					System.out.println("Registration succeeded!");
-					request.getRequestDispatcher("home.jsp").forward(request, response);
+					String jwt = Crypto.getInstance().genJwt(email);
+					response.getWriter().println(gson.toJson(new Jwt(jwt)));
+					ServerLogger.println("Registration succeeded!");
+					response.setStatus(200);
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
+				response.setStatus(500);
 			}
 		} else {
-			System.out.printf("Email '%s' is invalid!%n", email);
+			String msg = String.format("Email '%s' is invalid!%n", email);
+			ServerLogger.println(msg);
+			response.getWriter().println(gson.toJson(new HttpError(msg)));
+			response.setStatus(406);
 		}
-		// On error, stay on the registration page
-		request.getRequestDispatcher("register.html").forward(request, response);
 	}
 
 }

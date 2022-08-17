@@ -1,4 +1,4 @@
-package crypto;
+package server.crypto;
 
 public class JwtPayload {
 

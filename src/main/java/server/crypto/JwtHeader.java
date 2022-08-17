@@ -1,4 +1,4 @@
-package crypto;
+package server.crypto;
 
 public class JwtHeader {
 	public final String alg;

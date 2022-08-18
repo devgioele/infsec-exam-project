@@ -2,14 +2,15 @@ package client.util;
 
 public class ClientLogger {
 
-	private static final String prefix = "[CLIENT] ";
+	private static final String prefix = "[CLIENT]";
 
 	public static void printlnErr(String x) {
 		printfErr("%s%n", x);
 	}
 
 	public static void printfErr(String format, Object... args) {
-		System.err.printf("%s %s", prefix, format);
+		String msg = String.format(format, args);
+		System.err.printf("%s %s", prefix, msg);
 	}
 
 	public static void println(String x) {
@@ -17,7 +18,8 @@ public class ClientLogger {
 	}
 
 	public static void printf(String format, Object... args) {
-		System.out.printf("%s %s", prefix, format);
+		String msg = String.format(format, args);
+		System.out.printf("%s %s", prefix, msg);
 	}
 
 }

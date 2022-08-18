@@ -6,9 +6,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import server.crypto.Crypto;
+import server.crypto.JwtPayload;
 import server.util.Database;
+import util.Common;
 import util.Convert;
-import util.Sanitize;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static server.crypto.Crypto.extractJwtHeader;
 
-@WebServlet("/server/GetInboxServlet")
+@WebServlet(name = "ServerGetInboxServlet", urlPatterns = {"/server/inbox"})
 public class GetInboxServlet extends HttpServlet {
 
 	private static Connection conn;
@@ -33,11 +34,18 @@ public class GetInboxServlet extends HttpServlet {
 		response.setContentType("application/json");
 
 		String jwt = extractJwtHeader(request);
-		if (!Crypto.getInstance().isJwtValid(jwt)) {
+		JwtPayload payload = Crypto.getInstance().getJwtPayload(jwt);
+		if (payload == null) {
 			response.setStatus(401);
 			return;
 		}
-		String email = Sanitize.noHtml(request.getParameter("email"));
+
+		String email = payload.email;
+
+		if(Common.anyNull(email)) {
+			response.setStatus(400);
+			return;
+		}
 
 		try (ResultSet sqlRes = Database.query(conn,
 								"SELECT * FROM mail WHERE receiver=? ORDER BY [time] DESC", email)) {

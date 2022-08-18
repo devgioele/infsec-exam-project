@@ -2,19 +2,21 @@ package client.servlet;
 
 import client.crypto.Crypto;
 import client.server.Server;
-import client.server.UnauthorizedException;
+import client.util.HttpException;
+import client.util.UnauthorizedException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import server.crypto.JwtPayload;
 
 import java.io.IOException;
 
 @WebServlet("/SendMailServlet")
 public class SendMailServlet extends HttpServlet {
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("text/html");
 
@@ -24,8 +26,8 @@ public class SendMailServlet extends HttpServlet {
 		String subject = request.getParameter("subject");
 		String body = request.getParameter("body");
 		try {
-			request.setAttribute("content", getContent(jwt, email, receiver, subject, body));
-		} catch(UnauthorizedException ex) {
+			request.setAttribute("content", getContent(jwt, receiver, subject, body));
+		} catch (UnauthorizedException ex) {
 			request.getRequestDispatcher("login.html").forward(request, response);
 			return;
 		}
@@ -33,14 +35,19 @@ public class SendMailServlet extends HttpServlet {
 		request.getRequestDispatcher("home.jsp").forward(request, response);
 	}
 
-	private String getContent(String jwt, String sender, String receiver, String subject, String body) throws UnauthorizedException {
+	private String getContent(String jwt, String receiver, String subject, String body)
+			throws UnauthorizedException {
 		try {
-			Server.getInstance().sendMail(jwt, sender, receiver, subject, body);
-		} catch(Exception ex) {
-			if(ex instanceof UnauthorizedException) {
+			Server.getInstance().sendMail(jwt, receiver, subject, body);
+		} catch (IOException ex) {
+			if (ex instanceof UnauthorizedException) {
 				throw (UnauthorizedException) ex;
 			}
-			return "ERROR SENDING EMAIL!";
+			String msg = "Email could not be sent!";
+			if(ex instanceof HttpException) {
+				msg += "\n" + ((HttpException) ex).getUserMessage();
+			}
+			return msg;
 		}
 		return "Sent!";
 	}

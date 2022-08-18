@@ -2,7 +2,8 @@ package client.servlet;
 
 import client.crypto.Crypto;
 import client.server.Server;
-import client.server.UnauthorizedException;
+import client.util.Jakarta;
+import client.util.UnauthorizedException;
 import http.Email;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,12 +20,13 @@ public class SentEmailsServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("text/html");
+		Jakarta.disableCaching(response);
 
 		String jwt = Crypto.extractJwtCookie(request);
 		String email = Sanitize.noHtml(request.getParameter("email"));
 		try {
-		request.setAttribute("content", getContent(jwt, email));
-		} catch(UnauthorizedException ex) {
+			request.setAttribute("content", getContent(jwt));
+		} catch (UnauthorizedException ex) {
 			request.getRequestDispatcher("login.html").forward(request, response);
 			return;
 		}
@@ -32,12 +34,12 @@ public class SentEmailsServlet extends HttpServlet {
 		request.getRequestDispatcher("home.jsp").forward(request, response);
 	}
 
-	private String getContent(String jwt, String email) throws UnauthorizedException {
+	private String getContent(String jwt) throws UnauthorizedException {
 		Email[] sentEmails;
 		try {
-			sentEmails = Server.getInstance().loadSentEmails(jwt, email);
-		} catch(Exception ex) {
-			if(ex instanceof UnauthorizedException) {
+			sentEmails = Server.getInstance().loadSentEmails(jwt);
+		} catch (Exception ex) {
+			if (ex instanceof UnauthorizedException) {
 				throw (UnauthorizedException) ex;
 			}
 			return "ERROR IN FETCHING SENT MAILS!";

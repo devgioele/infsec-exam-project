@@ -5,8 +5,8 @@ import client.util.ClientLogger;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import okhttp3.Request;
 
+import java.net.http.HttpRequest;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -20,8 +20,8 @@ public class Crypto {
 		return bearerPrefix + jwt;
 	}
 
-	public static Request.Builder setJwtHeader(Request.Builder builder, String jwt) {
-		return builder.addHeader(jwtId, addBearer(jwt));
+	public static HttpRequest.Builder setJwtHeader(HttpRequest.Builder builder, String jwt) {
+		return builder.setHeader(jwtId, addBearer(jwt));
 	}
 
 	public static void setJwtCookie(HttpServletResponse response, String jwt) {

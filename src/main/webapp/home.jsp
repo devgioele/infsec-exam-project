@@ -9,7 +9,7 @@
 	<title>Home page</title>
 </head>
 <body>
-	<nav class="navbar">
+	<nav class="header">
 	  <div class="box">
 	  	<div>
 			<img src="images/email_icon.jpg" align="left" />
@@ -26,14 +26,29 @@
 	</nav>
 	
 	<div class="grid-container">
-		<form class="btn-group" action="NavigationServlet" method="post">
-			<input type="hidden" name="email" value="<%= request.getAttribute("email") %>">
-			<input type="submit" name="newMail" value="New Mail">
-			<input type="submit" name="inbox" value="Inbox">
-			<input type="submit" name="sent" value="Sent">
-		</form>
-		
-		<%= request.getAttribute("content")!=null ? request.getAttribute("content") : "" %>
+	    <div class="menu">
+	        <div class="btn">
+	            New Mail
+	            <a href="NewMailServlet?email=<%= request.getAttribute("email") %>">
+	                <span class="btn-link"></span>
+	            </a>
+	        </div>
+	        <div class="btn">
+	            Inbox
+	            <a href="InboxServlet?email=<%= request.getAttribute("email") %>">
+	                <span class="btn-link"></span>
+	            </a>
+	        </div>
+	        <div class="btn">
+	            Sent
+	            <a href="SentEmailsServlet?email=<%= request.getAttribute("email") %>">
+	                <span class="btn-link"></span>
+	            </a>
+	        </div>
+	    </div>
+		<div class="content">
+		    <%= request.getAttribute("content")!=null ? request.getAttribute("content") : "" %>
+		</div>
 	</div>
 </body>
 </html>

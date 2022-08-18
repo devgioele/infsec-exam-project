@@ -16,11 +16,12 @@ import static util.IO.jsonToFile;
 
 public class Crypto {
 
-	private static Crypto INSTANCE;
-	private CryptoConfig config;
-
 	public static final String jwtId = "Authorization";
 	public static final String bearerPrefix = "Bearer ";
+
+	private static Crypto INSTANCE;
+
+	private final CryptoConfig config;
 
 	public static Crypto getInstance() {
 		if (INSTANCE == null) {
@@ -31,20 +32,22 @@ public class Crypto {
 	}
 
 	public Crypto(String pathConfig) {
-		config = jsonFromFile(pathConfig, CryptoConfig.class);
-		if (config != null) {
-			return;
+		CryptoConfig config = jsonFromFile(pathConfig, CryptoConfig.class);
+		if (config == null) {
+			ServerLogger.println("Creating a new secret.");
+			SecureRandom rnd = new SecureRandom();
+			byte[] secret = new byte[100];
+			rnd.nextBytes(secret);
+			config = new CryptoConfig(secret, 60_000, "SHA-256");
+			jsonToFile(config, pathConfig);
 		}
-		ServerLogger.println("Creating a new secret.");
-		SecureRandom rnd = new SecureRandom();
-		byte[] secret = new byte[100];
-		rnd.nextBytes(secret);
-		config = new CryptoConfig(secret, 60_000, "SHA-256");
-		jsonToFile(config, pathConfig);
+		this.config = config;
 	}
 
 	public static String extractJwtHeader(HttpServletRequest request) {
-		return removeBearer(request.getHeader(jwtId));
+		String header = request.getHeader(jwtId);
+		if(header == null) return null;
+		return removeBearer(header);
 	}
 
 	private static String removeBearer(String bearer) {
@@ -76,12 +79,12 @@ public class Crypto {
 		}
 	}
 
-	private boolean isJwtValid(String jwt, String algorithm) throws NoSuchAlgorithmException {
+	private JwtPayload getJwtPayload(String jwt, String algorithm) throws NoSuchAlgorithmException {
 		String[] parts = jwt.split("\\.");
 		// Verify structure
 		if (parts.length != 3) {
-			ServerLogger.printf("JWT ill structured with a length of %d.%n%s%n", parts.length, jwt);
-			return false;
+			ServerLogger.printf("JWT ill structured with a length of %d:%n%s%n", parts.length, jwt);
+			return null;
 		}
 		String encodedHeader = parts[0];
 		String encodedPayload = parts[1];
@@ -93,7 +96,7 @@ public class Crypto {
 			ServerLogger.printf("JWT with invalid signature.%nGot: %s%nBut expected: %s%n",
 					signature,
 					localSignature);
-			return false;
+			return null;
 		}
 		JwtHeader header = Convert.gson.fromJson(Convert.fromBase64(encodedHeader), JwtHeader.class);
 		// Verify header
@@ -101,20 +104,20 @@ public class Crypto {
 		if (!header.equals(localHeader)) {
 			ServerLogger.printf("JWT with invalid header.%nGot: %s%nBut expected: %s%n", header,
 					localHeader);
-			return false;
+			return null;
 		}
 		JwtPayload payload = Convert.gson.fromJson(Convert.fromBase64(encodedPayload), JwtPayload.class);
 		// Verify expiration time
 		if (payload.exp <= new Date().getTime()) {
 			ServerLogger.println("Expired JWT.");
-			return false;
+			return null;
 		}
-		return true;
+		return payload;
 	}
 
-	public boolean isJwtValid(String jwt) {
+	public JwtPayload getJwtPayload(String jwt) {
 		try {
-			return isJwtValid(jwt, config.jwtAlgorithm);
+			return getJwtPayload(jwt, config.jwtAlgorithm);
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}

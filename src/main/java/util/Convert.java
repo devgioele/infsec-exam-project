@@ -9,6 +9,7 @@ import java.util.Base64;
 public class Convert {
 
 	public static final Gson gson = new GsonBuilder().create();
+	public static final Gson gsonPretty = new GsonBuilder().setPrettyPrinting().create();
 	private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
 
 	public static String toBase16(byte[] bytes) {

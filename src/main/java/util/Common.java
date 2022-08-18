@@ -16,4 +16,12 @@ public class Common {
 		return total;
 	}
 
+	public static boolean anyNull(Object... objects) {
+		for(Object obj : objects) {
+			if(obj == null)
+				return true;
+		}
+		return false;
+	}
+
 }

@@ -6,9 +6,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import server.crypto.Crypto;
+import server.crypto.JwtPayload;
 import server.util.Database;
 import util.Convert;
-import util.Sanitize;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -19,7 +19,7 @@ import java.util.List;
 
 import static server.crypto.Crypto.extractJwtHeader;
 
-@WebServlet("/server/GetSentEmailsServlet")
+@WebServlet(name = "ServerGetSentEmailsServlet", urlPatterns = {"/server/email/sent"})
 public class GetSentEmailsServlet extends HttpServlet {
 
 	private static Connection conn;
@@ -33,11 +33,12 @@ public class GetSentEmailsServlet extends HttpServlet {
 		response.setContentType("application/json");
 
 		String jwt = extractJwtHeader(request);
-		if (!Crypto.getInstance().isJwtValid(jwt)) {
+		JwtPayload payload = Crypto.getInstance().getJwtPayload(jwt);
+		if (payload == null) {
 			response.setStatus(401);
 			return;
 		}
-		String sender = Sanitize.noHtml(request.getParameter("sender"));
+		String sender = payload.email;
 
 		try (ResultSet sqlRes = Database.query(conn,
 				"SELECT * FROM mail WHERE sender=? ORDER BY [time] DESC", sender)) {

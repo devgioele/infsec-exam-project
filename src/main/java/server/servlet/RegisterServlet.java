@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import server.crypto.Crypto;
 import server.util.Database;
 import server.util.ServerLogger;
+import util.Common;
 import util.Sanitize;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.sql.SQLException;
 
 import static util.Convert.gson;
 
-@WebServlet("/server/RegisterServlet")
+@WebServlet(name = "ServerRegisterServlet", urlPatterns = {"/server/register"})
 public class RegisterServlet extends HttpServlet {
 
 	private static Connection conn;
@@ -36,6 +37,11 @@ public class RegisterServlet extends HttpServlet {
 		String surname = Sanitize.noHtml(request.getParameter("surname"));
 		String email = Sanitize.noHtml(request.getParameter("email"));
 		String pwd = Sanitize.noHtml(request.getParameter("password"));
+
+		if(Common.anyNull(name, surname, email, pwd)) {
+			response.setStatus(400);
+			return;
+		}
 
 		if (Sanitize.isEmail(email)) {
 			try (ResultSet sqlRes = Database.query(conn, "SELECT * FROM [user] WHERE email=?",

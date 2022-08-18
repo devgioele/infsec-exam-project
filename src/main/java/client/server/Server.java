@@ -1,11 +1,11 @@
 package client.server;
 
-import client.crypto.Crypto;
+import client.util.ClientLogger;
+import client.util.ConciseHttpClient;
+import client.util.UnauthorizedException;
 import http.Email;
 import http.Jwt;
 import http.User;
-import okhttp3.*;
-import org.jsoup.HttpStatusException;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -14,13 +14,13 @@ import java.util.Map;
 
 import static util.Convert.gson;
 import static util.IO.jsonFromFile;
+import static util.IO.jsonToFile;
 
 public class Server {
 
 	private static Server INSTANCE;
-	private static final OkHttpClient client = new OkHttpClient();
-	private static final MediaType jsonMediaType =
-			MediaType.get("application/json; " + "charset=utf-8");
+
+	private final ConciseHttpClient client;
 	private final ServerConfig config;
 
 	public static Server getInstance() {
@@ -32,102 +32,34 @@ public class Server {
 	}
 
 	public Server(String pathConfig) {
-		config = jsonFromFile(pathConfig, ServerConfig.class);
+		ServerConfig config = jsonFromFile(pathConfig, ServerConfig.class);
 		if (config == null) {
-			throw new RuntimeException("The client cannot run without server config!");
+			ClientLogger.println("No server config found. Creating a template");
+			config = new ServerConfig("http://localhost:8080/exam-project/server");
+			jsonToFile(config, pathConfig);
 		}
+		client = new ConciseHttpClient(config.location);
+		this.config = config;
 	}
 
-	private String sendRequest(Request request) throws IOException {
-		try (Response response = client.newCall(request).execute()) {
-			ResponseBody rb = response.body();
-			String body = rb == null ? null : rb.string();
-			if (response.isSuccessful()) {
-				return body;
-			} else if (response.code() == 401) {
-				throw new UnauthorizedException(body, request.url().toString());
-			}
-			throw new HttpStatusException(body, response.code(), request.url().toString());
-		}
-	}
-
-	/** To make a post request without body, pass the empty string "" as body. */
-	private Request compileRequest(String path, String jwt, Map<String, String> params,
-								   String json)
+	public Email[] loadSentEmails(String jwt)
 			throws IOException {
-		String url = config.location + path;
-		// Verify url
-		HttpUrl httpUrl = HttpUrl.parse(url);
-		if (httpUrl == null) {
-			throw new IOException("Invalid url: " + url);
-		}
-		HttpUrl.Builder httpBuilder = httpUrl.newBuilder();
-		// Add query parameters
-		if (params != null) {
-			for (Map.Entry<String, String> param : params.entrySet()) {
-				httpBuilder.addQueryParameter(param.getKey(), param.getValue());
-			}
-		}
-		Request.Builder requestBuilder = new Request.Builder().url(httpBuilder.build());
-		// Append JWT
-		if (jwt != null) {
-			requestBuilder = Crypto.setJwtHeader(requestBuilder, jwt);
-		}
-		// Get if json is null
-		if (json == null) return requestBuilder.get().build();
-		RequestBody body = RequestBody.create(json, jsonMediaType);
-		return requestBuilder.post(body).build();
-	}
-
-	private String get(String path, String jwt, Map<String, String> params) throws IOException {
-		Request req = compileRequest(path, jwt, params, null);
-		return sendRequest(req);
-	}
-
-	private String get(String path, String jwt) throws IOException {
-		return get(path, jwt, null);
-	}
-
-	private String post(String path, String jwt, Map<String, String> params, String json)
-			throws IOException {
-		Request req = compileRequest(path, jwt, params, json);
-		return sendRequest(req);
-	}
-
-	private String post(String path, String jwt, Map<String, String> params) throws IOException {
-		return post(path, jwt, params, "");
-	}
-
-	private String post(String path, Map<String, String> params) throws IOException {
-		return post(path, null, params);
-	}
-
-	private String post(String path, String jwt) throws IOException {
-		return post(path, jwt, null);
-	}
-
-	public Email[] loadSentEmails(String jwt, String sender) throws IOException {
-		Map<String, String> params = new HashMap<>();
-		params.put("sender", sender);
-		String json = get("/server/GetSentEmailsServlet", jwt, params);
+		String json = client.get("email/sent", jwt);
 		return gson.fromJson(json, Email[].class);
 	}
 
-	public Email[] loadInbox(String jwt, String email) throws IOException {
-		Map<String, String> params = new HashMap<>();
-		params.put("email", email);
-		String json = get("/server/GetInboxServlet", jwt, params);
+	public Email[] loadInbox(String jwt) throws IOException {
+		String json = client.get("inbox", jwt);
 		return gson.fromJson(json, Email[].class);
 	}
 
-	public void sendMail(String jwt, String sender, String receiver, String subject, String body)
+	public void sendMail(String jwt, String receiver, String subject, String body)
 			throws IOException {
 		Map<String, String> params = new HashMap<>();
-		params.put("sender", sender);
-		params.put("receiver", sender);
-		params.put("subject", sender);
-		params.put("body", sender);
-		post("/server/SendMailServlet", jwt, params);
+		params.put("receiver", receiver);
+		params.put("subject", subject);
+		params.put("body", body);
+		client.post("email/send", jwt, params);
 	}
 
 	/**
@@ -135,31 +67,32 @@ public class Server {
 	 *
 	 * @return The JWT generated by the server.
 	 */
-	public String register(User user) throws ServerException, IOException {
+	public String register(User user) throws IOException {
 		Map<String, String> params = new HashMap<>();
 		params.put("name", user.name);
 		params.put("surname", user.surname);
 		params.put("email", user.email);
 		params.put("password", user.password);
-		String json = post("/server/RegisterServlet", params);
+		String json = client.post("register", params);
 		return gson.fromJson(json, Jwt.class).jwt;
 	}
 
-	public String login(User user) throws ServerException, IOException {
+	public String login(User user) throws IOException {
 		Map<String, String> params = new HashMap<>();
-		params.put("name", user.name);
-		params.put("surname", user.surname);
 		params.put("email", user.email);
 		params.put("password", user.password);
-		String json = post("/server/LoginServlet", params);
+		String json = client.post("login", params);
 		return gson.fromJson(json, Jwt.class).jwt;
 	}
 
 	public boolean isJwtValid(String jwt) {
 		try {
-			post("/server/VerifyJwtServlet", jwt);
+			client.post("jwt/verify", jwt);
 			return true;
+		} catch (UnauthorizedException ex) {
+			return false;
 		} catch(IOException ex) {
+			ex.printStackTrace();
 			return false;
 		}
 	}

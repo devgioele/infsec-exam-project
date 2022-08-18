@@ -1,36 +1,28 @@
 package server.servlet;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import server.crypto.Crypto;
-import server.util.Database;
-
-import java.io.IOException;
-import java.sql.Connection;
+import server.crypto.JwtPayload;
+import server.util.ServerLogger;
 
 import static server.crypto.Crypto.extractJwtHeader;
 
-@SuppressWarnings("unused")
-@WebServlet("/server/VerifyJwtServlet")
+@WebServlet(name = "ServerVerifyJwtServlet", urlPatterns = {"/server/jwt/verify"})
 public class VerifyJwtServlet extends HttpServlet {
 
-	private static Connection conn;
-
-	public void init() {
-		conn = Database.newConnection();
-	}
-
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) {
 		response.setContentType("application/json");
 
 		String jwt = extractJwtHeader(request);
-		if (!Crypto.getInstance().isJwtValid(jwt)) {
+		JwtPayload payload = Crypto.getInstance().getJwtPayload(jwt);
+		if (payload == null) {
+			ServerLogger.println("JWT is invalid.");
 			response.setStatus(401);
 		} else {
+			ServerLogger.println("JWT is valid.");
 			response.setStatus(200);
 		}
 	}

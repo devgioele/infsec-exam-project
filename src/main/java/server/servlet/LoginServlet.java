@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import server.crypto.Crypto;
 import server.util.Database;
 import server.util.ServerLogger;
+import util.Common;
 import util.Sanitize;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ import java.sql.SQLException;
 
 import static util.Convert.gson;
 
-@WebServlet("/server/LoginServlet")
+@WebServlet(name = "ServerLoginServlet", urlPatterns = {"/server/login"})
 public class LoginServlet extends HttpServlet {
 
 	private static Connection conn;
@@ -33,6 +34,11 @@ public class LoginServlet extends HttpServlet {
 
 		String email = Sanitize.noHtml(request.getParameter("email"));
 		String pwd = Sanitize.noHtml(request.getParameter("password"));
+
+		if(Common.anyNull(email, pwd)) {
+			response.setStatus(400);
+			return;
+		}
 
 		try (ResultSet sqlRes = Database.query(conn,
 				"SELECT * FROM [user] WHERE email=? AND password=?", email, pwd)) {

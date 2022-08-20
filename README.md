@@ -23,6 +23,9 @@ These rules are followed throughout the codebase to keep the client and the serv
 
 The complexity and unconventionality of this architecture can justly create some doubts on its appropriateness. The reason for this architecture was to be able to run Java on the client, use it to generate RSA keys, send to the server only the public key. Since Java cannot run in the browser, the only way to achieve this, without switching to JavaScript, is to use a local web server as "the client".
 
+Technically, another possibility would have been to write the client as a Java application that uses JavaFX for the GUI.
+Tomcat would then be used for the server only.
+
 ## Setup
 
 Install Java 11 or later.

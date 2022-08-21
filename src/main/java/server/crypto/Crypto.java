@@ -85,6 +85,7 @@ public class Crypto {
 	}
 
 	private JwtPayload getJwtPayload(String jwt, HashingAlgorithm algorithm) {
+		if(jwt == null) return null;
 		String[] parts = jwt.split("\\.");
 		// Verify structure
 		if (parts.length != 3) {

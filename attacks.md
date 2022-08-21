@@ -44,12 +44,6 @@ http://localhost:8080/register?name=Name3&surname=Surname3&email=user3%40gmail.c
 ```
 This URL can be used for a XSRF attack, like shown below.
 
-The email check is disabled, because the responsible query is compiled to:
-```sql
-SELECT * FROM [user] WHERE email=''; --'
-```
-The password is not treated and embedded in the response, resulting in the execution of the script in the victim's browser.
-
 _Note: The password can be at most 50 characters long due the limit imposed by the database.
 Using a longer string throws an exception on the server and does not return the script in the response._
 

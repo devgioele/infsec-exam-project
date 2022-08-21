@@ -12,6 +12,7 @@ Made at the [Free University of Bolzano](https://unibz.it)
 - Password hashing and salting (56 characters long salt encoded in base64)
 - SQL injection prevention
 - Reflected XSS and stored XSS prevention
+- XSRF (aka. CSRF) prevention using the `SameSite` attribute of cookies
 - Configuration files for both client and server settings
 
 ## Architecture

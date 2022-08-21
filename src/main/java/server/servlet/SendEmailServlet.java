@@ -1,7 +1,6 @@
 package server.servlet;
 
 import http.HttpError;
-import http.Jwt;
 import server.crypto.Crypto;
 import jakarta.servlet.http.HttpServlet;
 
@@ -14,7 +13,7 @@ import java.util.Date;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import server.crypto.JwtPayload;
+import http.JwtPayload;
 import server.util.Database;
 import server.util.ServerLogger;
 import util.Common;
@@ -23,8 +22,8 @@ import util.Sanitize;
 import static server.crypto.Crypto.extractJwtHeader;
 import static util.Convert.gson;
 
-@WebServlet(name = "ServerSendMailServlet", urlPatterns = {"/server/email/send"})
-public class SendMailServlet extends HttpServlet {
+@WebServlet(name = "ServerSendEmailServlet", urlPatterns = {"/server/email/send"})
+public class SendEmailServlet extends HttpServlet {
 
 	private Connection conn;
 
@@ -61,7 +60,7 @@ public class SendMailServlet extends HttpServlet {
 			if (sqlRes.next()) {
 				// Receiver exists, send email
 				try {
-					Database.update(conn, "INSERT INTO mail ( sender, receiver, signature, subject, body, [time] ) " +
+					Database.update(conn, "INSERT INTO email ( sender, receiver, signature, subject, body, [time] ) " +
 							"VALUES ( ?, ?, ?, ?, ?, ? )", sender, receiver, signature, subject, body, timestamp);
 					response.setStatus(200);
 				} catch (SQLException e) {

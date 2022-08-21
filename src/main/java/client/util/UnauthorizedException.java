@@ -1,7 +1,10 @@
 package client.util;
 
-import java.io.IOException;
 
-public class UnauthorizedException extends IOException {
+public class UnauthorizedException extends Exception {
+
+	public UnauthorizedException() {
+		super("401 - unauthorized");
+	}
 
 }

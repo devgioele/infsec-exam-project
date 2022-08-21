@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import server.crypto.Crypto;
-import server.crypto.JwtPayload;
+import http.JwtPayload;
 import server.util.Database;
 import util.Convert;
 
@@ -19,8 +19,8 @@ import java.util.List;
 
 import static server.crypto.Crypto.extractJwtHeader;
 
-@WebServlet(name = "ServerGetSentEmailsServlet", urlPatterns = {"/server/email/sent"})
-public class GetSentEmailsServlet extends HttpServlet {
+@WebServlet(name = "ServerInboxServlet", urlPatterns = {"/server/email/inbox"})
+public class InboxServlet extends HttpServlet {
 
 	private static Connection conn;
 
@@ -38,15 +38,16 @@ public class GetSentEmailsServlet extends HttpServlet {
 			response.setStatus(401);
 			return;
 		}
-		String sender = payload.email;
+
+		String email = payload.email;
 
 		try (ResultSet sqlRes = Database.query(conn,
-				"SELECT * FROM mail WHERE sender=? ORDER BY [time] DESC", sender)) {
-			List<Email> sentEmails = new ArrayList<>();
+								"SELECT * FROM email WHERE receiver=? ORDER BY [time] DESC", email)) {
+			List<Email> inbox = new ArrayList<>();
 			while (sqlRes.next()) {
-				sentEmails.add(Email.fromSql(sqlRes));
+				inbox.add(Email.fromSql(sqlRes));
 			}
-			response.getWriter().write(Convert.gson.toJson(sentEmails.toArray()));
+			response.getWriter().write(Convert.gson.toJson(inbox.toArray()));
 			response.setStatus(200);
 		} catch (SQLException e) {
 			e.printStackTrace();

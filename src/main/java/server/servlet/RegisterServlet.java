@@ -1,8 +1,10 @@
 package server.servlet;
 
+import com.google.gson.JsonSyntaxException;
 import http.HttpError;
 import http.Jwt;
-import jakarta.servlet.ServletException;
+import client.crypto.RsaKey;
+import http.RsaKey64;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,9 +13,11 @@ import server.crypto.Crypto;
 import server.util.Database;
 import server.util.ServerLogger;
 import util.Common;
+import util.Convert;
 import util.Sanitize;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,8 +41,15 @@ public class RegisterServlet extends HttpServlet {
 		String surname = Sanitize.noHtml(request.getParameter("surname"));
 		String email = Sanitize.noHtml(request.getParameter("email"));
 		String pwd = Sanitize.noHtml(request.getParameter("password"));
+		String body = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+		RsaKey64 publicKey = null;
+		try {
+			publicKey = gson.fromJson(body, RsaKey64.class);
+		} catch (JsonSyntaxException ignored) {
 
-		if(Common.anyNull(name, surname, email, pwd)) {
+		}
+
+		if (Common.anyNull(name, surname, email, pwd, publicKey)) {
 			response.setStatus(400);
 			return;
 		}
@@ -50,11 +61,15 @@ public class RegisterServlet extends HttpServlet {
 					String msg = String.format("Email '%s' already registered!", email);
 					ServerLogger.println(msg);
 					response.getWriter().println(gson.toJson(new HttpError(msg)));
-					response.setStatus(406);
+					response.setStatus(400);
 				} else {
-					Database.update(conn,
-							"INSERT INTO [user] ( name, surname, email, password )" + " " +
-									"VALUES ( ?, ?, ?, ? )", name, surname, email, pwd);
+					conn.setAutoCommit(false);
+					Database.update(conn, "INSERT INTO [user] ( name, surname, email, password )" +
+							" VALUES ( ?, ?, ?, ?)", name, surname, email, pwd);
+					Database.update(conn, "INSERT INTO public_key ( email, modulus, exponent )" +
+							" VALUES ( ?, ?, ? )", email, publicKey.modulus, publicKey.exponent);
+					conn.commit();
+					conn.setAutoCommit(true);
 					String jwt = Crypto.getInstance().genJwt(email);
 					response.getWriter().println(gson.toJson(new Jwt(jwt)));
 					ServerLogger.println("Registration succeeded!");
@@ -62,13 +77,20 @@ public class RegisterServlet extends HttpServlet {
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
+				try {
+					ServerLogger.println("Rolling back transaction");
+					conn.rollback();
+					conn.setAutoCommit(true);
+				} catch (SQLException ex) {
+					e.printStackTrace();
+				}
 				response.setStatus(500);
 			}
 		} else {
 			String msg = String.format("Email '%s' is invalid!%n", email);
 			ServerLogger.println(msg);
 			response.getWriter().println(gson.toJson(new HttpError(msg)));
-			response.setStatus(406);
+			response.setStatus(400);
 		}
 	}
 

@@ -14,7 +14,7 @@ import util.Sanitize;
 
 import java.io.IOException;
 
-@WebServlet("/SentEmailsServlet")
+@WebServlet(name = "SentEmailsServlet", urlPatterns = {"/email-sent"})
 public class SentEmailsServlet extends HttpServlet {
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -42,7 +42,7 @@ public class SentEmailsServlet extends HttpServlet {
 			if (ex instanceof UnauthorizedException) {
 				throw (UnauthorizedException) ex;
 			}
-			return "ERROR IN FETCHING SENT MAILS!";
+			return "ERROR IN FETCHING SENT EMAILS!";
 		}
 		StringBuilder output = new StringBuilder();
 		output.append("<div>\r\n");

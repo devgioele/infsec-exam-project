@@ -1,7 +1,9 @@
 package client.servlet;
 
 import client.crypto.Crypto;
+import client.server.Server;
 import client.util.Jakarta;
+import http.JwtPayload;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,28 +13,29 @@ import util.Sanitize;
 
 import java.io.IOException;
 
-@WebServlet("/NewMailServlet")
-public class NewMailServlet extends HttpServlet {
+@WebServlet(name = "NewEmailServlet", urlPatterns = {"/email-new"})
+public class NewEmailServlet extends HttpServlet {
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("text/html");
 		Jakarta.disableCaching(response);
 
-		if(!Crypto.isJwtValid(request)) {
+		String jwt = Crypto.extractJwtCookie(request);
+		JwtPayload payload = Server.getInstance().isJwtValid(jwt);
+
+		if(payload == null) {
 			request.getRequestDispatcher("login.html").forward(request, response);
 			return;
 		}
 
-		String email = Sanitize.noHtml(request.getParameter("email"));
-
-		request.setAttribute("content", getContent(email));
-		request.setAttribute("email", email);
+		request.setAttribute("content", getContent(payload.email));
+		request.setAttribute("email", payload.email);
 		request.getRequestDispatcher("home.jsp").forward(request, response);
 	}
 
 	private String getContent(String email) {
-		return "<form id=\"submitForm\" class=\"form-resize\" action=\"SendMailServlet\" " +
+		return "<form id=\"submitForm\" class=\"form-resize\" action=\"email-send\" " +
 				"method=\"post\">\r\n<input type=\"hidden\" name=\"email\" value=\"" + email +
 				"\">\r\n " +
 				"		<input class=\"single-row-input\" type=\"email\" name=\"receiver\" " +

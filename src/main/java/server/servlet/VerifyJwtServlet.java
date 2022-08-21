@@ -5,15 +5,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import server.crypto.Crypto;
-import server.crypto.JwtPayload;
+import http.JwtPayload;
 import server.util.ServerLogger;
+import util.Convert;
+
+import java.io.IOException;
 
 import static server.crypto.Crypto.extractJwtHeader;
 
 @WebServlet(name = "ServerVerifyJwtServlet", urlPatterns = {"/server/jwt/verify"})
 public class VerifyJwtServlet extends HttpServlet {
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
 		response.setContentType("application/json");
 
 		String jwt = extractJwtHeader(request);
@@ -23,6 +27,7 @@ public class VerifyJwtServlet extends HttpServlet {
 			response.setStatus(401);
 		} else {
 			ServerLogger.println("JWT is valid.");
+			response.getWriter().write(Convert.gson.toJson(payload));
 			response.setStatus(200);
 		}
 	}

@@ -3,6 +3,7 @@ package util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -10,7 +11,7 @@ public class Convert {
 
 	public static final Gson gson = new GsonBuilder().create();
 	public static final Gson gsonPretty = new GsonBuilder().setPrettyPrinting().create();
-	private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+	private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.UTF_8);
 
 	public static String toBase16(byte[] bytes) {
 		byte[] hexChars = new byte[bytes.length * 2];
@@ -22,12 +23,21 @@ public class Convert {
 		return new String(hexChars, StandardCharsets.UTF_8);
 	}
 
-	public static String toBase64(String str) {
+	public static String toBase64Url(String str) {
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(str.getBytes());
 	}
 
-	public static String fromBase64(String str) {
+
+	public static String fromBase64Url(String str) {
 		return new String(Base64.getUrlDecoder().decode(str));
+	}
+
+	public static String toBase64(BigInteger num) {
+		return new String(Base64.getEncoder().encode(num.toByteArray()));
+	}
+
+	public static BigInteger fromBase64(String str) {
+		return new BigInteger(Base64.getDecoder().decode(str));
 	}
 
 }

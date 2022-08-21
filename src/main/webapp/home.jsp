@@ -18,7 +18,7 @@
 			</p>
 	  	</div>
 	  	<div id="right">
-	  	    <form action="LogoutServlet" method="post">
+	  	    <form action="logout" method="post">
                 <input type="submit" name="logout" value="Logout" />
             </form>
         </div>
@@ -28,20 +28,20 @@
 	<div class="grid-container">
 	    <div class="menu">
 	        <div class="btn">
-	            New Mail
-	            <a href="NewMailServlet?email=<%= request.getAttribute("email") %>">
+	            New Email
+	            <a href="email-new">
 	                <span class="btn-link"></span>
 	            </a>
 	        </div>
 	        <div class="btn">
 	            Inbox
-	            <a href="InboxServlet?email=<%= request.getAttribute("email") %>">
+	            <a href="email-inbox">
 	                <span class="btn-link"></span>
 	            </a>
 	        </div>
 	        <div class="btn">
 	            Sent
-	            <a href="SentEmailsServlet?email=<%= request.getAttribute("email") %>">
+	            <a href="email-sent">
 	                <span class="btn-link"></span>
 	            </a>
 	        </div>

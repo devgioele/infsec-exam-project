@@ -48,7 +48,7 @@ public class LoginServlet extends HttpServlet {
 				response.getWriter().println(gson.toJson(new Jwt(jwt)));
 				response.setStatus(200);
 			} else {
-				String msg = String.format("User '%s' does not exist!", email);
+				String msg = String.format("User '%s' does not exist or the credentials are incorrect!", email);
 				ServerLogger.println(msg);
 				response.getWriter().println(gson.toJson(new HttpError(msg)));
 				response.setStatus(401);

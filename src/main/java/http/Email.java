@@ -8,8 +8,8 @@ public class Email {
 	public final String sender;
 	public final String receiver;
 	public final String signature;
-	public final String subject;
-	public final String body;
+	public String subject;
+	public String body;
 	public final String time;
 
 	public Email(String sender, String receiver, String signature, String subject, String body,

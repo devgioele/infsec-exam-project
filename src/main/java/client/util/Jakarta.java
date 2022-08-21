@@ -11,7 +11,6 @@ public class Jakarta {
 		response.setHeader("Last-Modified", new Date().toString());
 		response.setHeader("Cache-Control",
 				"max-age=0, no-cache, must-revalidate, proxy-revalidate");
-
 	}
 
 }

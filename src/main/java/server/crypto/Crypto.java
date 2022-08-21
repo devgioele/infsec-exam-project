@@ -1,5 +1,6 @@
 package server.crypto;
 
+import http.JwtPayload;
 import jakarta.servlet.http.HttpServletRequest;
 import server.util.ServerLogger;
 import util.Common;
@@ -11,13 +12,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
 
+import static util.Crypto.bearerPrefix;
+import static util.Crypto.jwtId;
 import static util.IO.jsonFromFile;
 import static util.IO.jsonToFile;
 
 public class Crypto {
-
-	public static final String jwtId = "Authorization";
-	public static final String bearerPrefix = "Bearer ";
 
 	private static Crypto INSTANCE;
 
@@ -34,7 +34,8 @@ public class Crypto {
 	public Crypto(String pathConfig) {
 		CryptoConfig config = jsonFromFile(pathConfig, CryptoConfig.class);
 		if (config == null) {
-			ServerLogger.println("Creating a new secret.");
+			ServerLogger.println("Creating a new crypto config.");
+			ServerLogger.println("Creating a new secret for JWT signatures.");
 			SecureRandom rnd = new SecureRandom();
 			byte[] secret = new byte[100];
 			rnd.nextBytes(secret);
@@ -65,8 +66,8 @@ public class Crypto {
 			throws NoSuchAlgorithmException {
 		JwtHeader header = new JwtHeader(config.jwtAlgorithm);
 		JwtPayload payload = new JwtPayload(email, new Date().getTime() + config.jwtLifetime);
-		String headerPayload = Convert.toBase64(Convert.gson.toJson(header)) + "." +
-				Convert.toBase64(Convert.gson.toJson(payload));
+		String headerPayload = Convert.toBase64Url(Convert.gson.toJson(header)) + "." +
+				Convert.toBase64Url(Convert.gson.toJson(payload));
 		String signature = hash(algorithm, headerPayload.getBytes(), config.secret);
 		return headerPayload + "." + signature;
 	}
@@ -98,7 +99,7 @@ public class Crypto {
 					localSignature);
 			return null;
 		}
-		JwtHeader header = Convert.gson.fromJson(Convert.fromBase64(encodedHeader), JwtHeader.class);
+		JwtHeader header = Convert.gson.fromJson(Convert.fromBase64Url(encodedHeader), JwtHeader.class);
 		// Verify header
 		JwtHeader localHeader = new JwtHeader(algorithm);
 		if (!header.equals(localHeader)) {
@@ -106,7 +107,7 @@ public class Crypto {
 					localHeader);
 			return null;
 		}
-		JwtPayload payload = Convert.gson.fromJson(Convert.fromBase64(encodedPayload), JwtPayload.class);
+		JwtPayload payload = Convert.gson.fromJson(Convert.fromBase64Url(encodedPayload), JwtPayload.class);
 		// Verify expiration time
 		if (payload.exp <= new Date().getTime()) {
 			ServerLogger.println("Expired JWT.");

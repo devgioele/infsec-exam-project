@@ -7,7 +7,11 @@ import java.io.IOException;
 
 public class HttpException extends IOException {
 
-	private final String body;
+	private String body;
+
+	public HttpException(Exception e) {
+		super("Unexpected server response: " + e.getMessage());
+	}
 
 	public HttpException(String url, String method, int statusCode, String body) {
 		super("Failed HTTP " + method + " to " + url + " with status code " + statusCode +
@@ -16,6 +20,7 @@ public class HttpException extends IOException {
 	}
 
 	public String getUserMessage() {
+		if (body == null) return getMessage();
 		HttpError error = Convert.gson.fromJson(body, HttpError.class);
 		return error.message;
 	}

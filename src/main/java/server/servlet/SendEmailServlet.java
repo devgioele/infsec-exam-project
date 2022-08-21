@@ -43,8 +43,7 @@ public class SendEmailServlet extends HttpServlet {
 		}
 		String sender = payload.email;
 		String receiver = Sanitize.noHtml(request.getParameter("receiver"));
-		// TODO: Use real signature
-		String signature = "";
+		String signature = request.getParameter("signature");
 		String subject = Sanitize.noHtml(request.getParameter("subject"));
 		String body = Sanitize.safeHtml(request.getParameter("body"));
 		String timestamp = new Date(System.currentTimeMillis()).toInstant().toString();
@@ -60,8 +59,8 @@ public class SendEmailServlet extends HttpServlet {
 			if (sqlRes.next()) {
 				// Receiver exists, send email
 				try {
-					Database.update(conn, "INSERT INTO email ( sender, receiver, signature, subject, body, [time] ) " +
-							"VALUES ( ?, ?, ?, ?, ?, ? )", sender, receiver, signature, subject, body, timestamp);
+					Database.update(conn, "INSERT INTO email ( sender, receiver, subject, body, signature, [time] ) " +
+							"VALUES ( ?, ?, ?, ?, ?, ? )", sender, receiver, subject, body, signature, timestamp);
 					response.setStatus(200);
 				} catch (SQLException e) {
 					e.printStackTrace();

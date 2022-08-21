@@ -22,7 +22,7 @@ public class NewEmailServlet extends HttpServlet {
 		Jakarta.disableCaching(response);
 
 		String jwt = Crypto.extractJwtCookie(request);
-		JwtPayload payload = Server.getInstance().isJwtValid(jwt);
+		JwtPayload payload = Crypto.validJwt(jwt);
 
 		if(payload == null) {
 			request.getRequestDispatcher("login.html").forward(request, response);

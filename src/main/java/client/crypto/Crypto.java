@@ -2,12 +2,16 @@ package client.crypto;
 
 import client.server.Server;
 import client.util.ClientLogger;
+import client.util.UnauthorizedException;
 import http.JwtPayload;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import server.crypto.JwtHeader;
+import server.util.ServerLogger;
 import util.Convert;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.http.HttpRequest;
 import java.nio.ByteBuffer;
@@ -16,10 +20,10 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Optional;
 
-import static util.Crypto.bearerPrefix;
-import static util.Crypto.jwtId;
+import static util.Crypto.*;
 import static util.IO.jsonFromFile;
 import static util.IO.jsonToFile;
 
@@ -44,7 +48,7 @@ public class Crypto {
 		CryptoConfig config = jsonFromFile(pathConfig, CryptoConfig.class);
 		if (config == null) {
 			ClientLogger.println("Creating a new crypto config.");
-			config = new CryptoConfig(4096);
+			config = new CryptoConfig(4096, HashingAlgorithm.SHA256);
 			saveConfig();
 		}
 		this.config = config;
@@ -56,9 +60,8 @@ public class Crypto {
 	 * @return The encrypted base 64 string.
 	 */
 	public static String encrypt(RsaKey key, String plaintext) {
-		// TODO: Is it more efficient to divide the string into multiple big integers?
 		// Interpret bytes of utf-8 string as big integer
-		BigInteger bi = new BigInteger(plaintext.getBytes());
+		BigInteger bi = new BigInteger(plaintext.getBytes(StandardCharsets.UTF_8));
 		// Encrypt bytes
 		BigInteger encrypted = key.apply(bi);
 		// Convert bytes to base 64 string
@@ -70,7 +73,7 @@ public class Crypto {
 	 * @param ciphertext The base 64 string decrypt.
 	 * @return The decrypted UTF-8 string.
 	 * @throws CharacterCodingException When the given ciphertext cannot be decrypted to a valid
-	 * UTF-8 string using the given key.
+	 *                                  UTF-8 string using the given key.
 	 */
 	public static String decrypt(RsaKey key, String ciphertext) throws CharacterCodingException {
 		// Bytes from base 64 string
@@ -94,7 +97,6 @@ public class Crypto {
 	/** Generates an RSA key pair, stores the private key and returns the public key. */
 	public RsaKey genKeyPair(String id) {
 		RsaKeyPair pair = Rsa.genKeyPair(config.rsaKeySize);
-		ClientLogger.printf("Generated keys for '%s':%nPrivate: %s%nPublic: %s%n", id, pair.privateKey, pair.publicKey);
 		config.addPrivateKey(id, pair.privateKey);
 		saveConfig();
 		return pair.publicKey;
@@ -126,6 +128,48 @@ public class Crypto {
 			return null;
 		}
 		return cookie.get().getValue();
+	}
+
+	/**
+	 * @return The payload of the JWT if it is valid or null otherwise.
+	 */
+	public static JwtPayload validJwt(String jwt) {
+		if(Server.getInstance().isJwtValid(jwt)) {
+			String[] parts = jwt.split("\\.");
+			// Verify structure
+			if (parts.length != 3) {
+				ServerLogger.printf("JWT ill structured with a length of %d:%n%s%n", parts.length,
+						jwt);
+				return null;
+			}
+			String encodedPayload = parts[1];
+			return Convert.gson.fromJson(Convert.fromBase64Url(encodedPayload), JwtPayload.class);
+		}
+		return null;
+	}
+
+	public String sign(String sender, String subject, String body) {
+		Optional<RsaKey> privateKey = Crypto.getInstance().getPrivateKey(sender);
+		if (privateKey.isEmpty()) {
+			ClientLogger.printfErr("Could not find private key for user '%s'%n", sender);
+			return null;
+		}
+		byte[] content = (subject + body).getBytes(StandardCharsets.UTF_8);
+		String digest = hash(config.signatureAlgorithm, content);
+		return encrypt(privateKey.get(), digest);
+	}
+
+	public boolean isSignatureValid(String sender, String subject, String body, String signature, String jwt)
+			throws UnauthorizedException, IOException {
+		Optional<RsaKey> publicKey = Server.getInstance().getPublicKey(jwt, sender);
+		if(publicKey.isEmpty()) {
+			ClientLogger.printfErr("Could not find public key for user '%s'%n", sender);
+			return false;
+		}
+		byte[] content = (subject + body).getBytes(StandardCharsets.UTF_8);
+		String digest = hash(config.signatureAlgorithm, content);
+		String decryptedDigest = decrypt(publicKey.get(), signature);
+		return digest.equals(decryptedDigest);
 	}
 
 }

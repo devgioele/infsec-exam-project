@@ -56,12 +56,13 @@ public class Server {
 		return gson.fromJson(json, Email[].class);
 	}
 
-	public void sendEmail(String jwt, String receiver, String subject, String body)
-			throws IOException, UnauthorizedException {
+	public void sendEmail(String jwt, String receiver, String subject, String body,
+						  String signature) throws IOException, UnauthorizedException {
 		Map<String, String> params = new HashMap<>();
 		params.put("receiver", receiver);
 		params.put("subject", subject);
 		params.put("body", body);
+		if (signature != null) params.put("signature", signature);
 		http.post("email/send", jwt, params);
 	}
 
@@ -77,7 +78,6 @@ public class Server {
 		params.put("surname", surname);
 		params.put("email", email);
 		params.put("password", password);
-		ClientLogger.println("Sending to server public key: " + publicKey);
 		RsaKey64 publicKey64 = publicKey.to64();
 		String json = http.post("register", params, gson.toJson(publicKey64));
 		return gson.fromJson(json, Jwt.class).jwt;
@@ -91,18 +91,15 @@ public class Server {
 		return gson.fromJson(json, Jwt.class).jwt;
 	}
 
-	/**
-	 * @return The payload of the JWT or null if the JWT is invalid.
-	 */
-	public JwtPayload isJwtValid(String jwt) {
+	public boolean isJwtValid(String jwt) {
 		try {
-			String json = http.post("jwt/verify", jwt);
-			return gson.fromJson(json, JwtPayload.class);
+			http.post("jwt/verify", jwt);
+			return true;
 		} catch (UnauthorizedException ex) {
-			return null;
+			return false;
 		} catch (IOException ex) {
 			ex.printStackTrace();
-			return null;
+			return false;
 		}
 	}
 
@@ -117,7 +114,7 @@ public class Server {
 				return Optional.empty();
 			}
 			RsaKey key = RsaKey.from64(key64);
-			ClientLogger.println("Public key of '"+email+"' received from server: " + key);
+			ClientLogger.println("Public key of '" + email + "' received from server: " + key);
 			return Optional.of(key);
 		} catch (JsonSyntaxException ignored) {
 			return Optional.empty();

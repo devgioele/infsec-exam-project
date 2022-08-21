@@ -24,12 +24,12 @@ public class Convert {
 	}
 
 	public static String toBase64Url(String str) {
-		return Base64.getUrlEncoder().withoutPadding().encodeToString(str.getBytes());
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(str.getBytes(StandardCharsets.UTF_8));
 	}
 
 
 	public static String fromBase64Url(String str) {
-		return new String(Base64.getUrlDecoder().decode(str));
+		return new String(Base64.getUrlDecoder().decode(str.getBytes(StandardCharsets.UTF_8)));
 	}
 
 	public static String toBase64(BigInteger num) {

@@ -28,7 +28,7 @@ public class InboxServlet extends HttpServlet {
 		Jakarta.disableCaching(response);
 
 		String jwt = Crypto.extractJwtCookie(request);
-		JwtPayload payload = Server.getInstance().isJwtValid(jwt);
+		JwtPayload payload = Crypto.validJwt(jwt);
 
 		if (payload != null) {
 			try {
@@ -49,10 +49,7 @@ public class InboxServlet extends HttpServlet {
 		Email[] inbox;
 		try {
 			inbox = Server.getInstance().loadInbox(jwt);
-		} catch (Exception ex) {
-			if (ex instanceof UnauthorizedException) {
-				throw (UnauthorizedException) ex;
-			}
+		} catch (IOException ex) {
 			return "ERROR IN FETCHING INBOX!";
 		}
 		StringBuilder output = new StringBuilder();
@@ -61,26 +58,40 @@ public class InboxServlet extends HttpServlet {
 		int amount = 0;
 		for (Email e : inbox) {
 			amount++;
-			// Decrypt if private key has been found
+			// Attempt decryption
 			Optional<RsaKey> privateKey = Crypto.getInstance().getPrivateKey(email);
 			if (privateKey.isPresent()) {
-				ClientLogger.printf("Decrypting subject: %s%nWith private key: %s%n", e.subject,
-						privateKey.get());
 				try {
 					e.subject = Crypto.decrypt(privateKey.get(), e.subject);
 					e.body = Crypto.decrypt(privateKey.get(), e.body);
 				} catch (CharacterCodingException ex) {
 					output.append(
-							"<p>Email was not encrypted or was encrypted with a foreign public " +
-									"key" + ".</p>");
+							"<b style='color: grey'>Email not encrypted or encrypted with a foreign public " +
+									"key.</b>");
 				}
 			} else {
-				output.append("<p>Private key not found for decryption of email.</p>");
+				output.append("<p style='color: red'>Private key not found for decryption of email.</p>");
 			}
+			// Check existence of signature
+			if(e.signature == null) {
+				output.append("<b style='color: grey'>Unsigned</b>");
+			} else {
+				// Verify signature
+				try {
+					if(Crypto.getInstance().isSignatureValid(e.sender, e.subject, e.body, e.signature, jwt)) {
+						output.append("<b style='color: blue'>Signed</b>");
+					} else {
+						output.append("<b style='color: red'>Invalid signature</b>");
+					}
+				} catch (IOException ex) {
+					output.append("<b style='color: orange'>Unknown signature</b>");
+				}
+			}
+			// Content of email
 			output.append("<div style=\"white-space: pre-wrap;\"><span style=\"color:grey;\">")
-					.append("TO:&emsp;").append(e.sender).append("&emsp;&emsp;AT:&emsp;")
+					.append("FROM:&emsp;").append(e.sender).append("&emsp;&emsp;AT:&emsp;")
 					.append(e.time).append("</span><br><b>").append(e.subject)
-					.append("</b>\r\n<br>").append(e.body).append("<br><br>").append(e.signature)
+					.append("</b>\r\n<br>").append(e.body)
 					.append("</div>\n<hr style=\"border-top: 2px solid black;\">\r\n");
 		}
 		if (amount == 0) {

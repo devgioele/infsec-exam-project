@@ -29,7 +29,7 @@ public class SendEmailServlet extends HttpServlet {
 		boolean sign = request.getParameter("digital-sign") != null;
 
 		String jwt = Crypto.extractJwtCookie(request);
-		JwtPayload payload = Server.getInstance().isJwtValid(jwt);
+		JwtPayload payload = Crypto.validJwt(jwt);
 
 		if (payload != null) {
 			try {
@@ -47,15 +47,14 @@ public class SendEmailServlet extends HttpServlet {
 		}
 	}
 
-	private String getContent(String jwt, String email, String receiver, String subject,
+	private String getContent(String jwt, String sender, String receiver, String subject,
 							  String body, boolean sign) throws UnauthorizedException {
-		// If asked to sign digitally
+		// Sign digitally if asked so
+		String signature = null;
 		if (sign) {
-			Optional<RsaKey> privateKey = Crypto.getInstance().getPrivateKey(email);
-			if (privateKey.isEmpty()) {
-				ClientLogger.printfErr("Could not find private key for user '%s'%n", email);
-			} else {
-				// TODO: Implement signing, signature verification and the server-side storage
+			signature = Crypto.getInstance().sign(sender, subject, body);
+			if(signature == null) {
+				return "Could not digitally sign the email!";
 			}
 		}
 
@@ -66,18 +65,19 @@ public class SendEmailServlet extends HttpServlet {
 		} catch (IOException e) {
 			return "Cannot retrieve public key of receiver: " + e.getMessage();
 		}
-		// Encrypt if the receiver exists and has a public key
 		if (publicKey.isEmpty()) {
 			return "Could not find public key of receiver. Does the receiver '" + receiver +
 					"' exist?";
 		}
+
+		// Encrypt
 		ClientLogger.printf("Encrypting subject: %s%nWith public key: %s%n", subject,
 				publicKey.get());
 		subject = Crypto.encrypt(publicKey.get(), subject);
 		body = Crypto.encrypt(publicKey.get(), body);
 
 		try {
-			Server.getInstance().sendEmail(jwt, receiver, subject, body);
+			Server.getInstance().sendEmail(jwt, receiver, subject, body, signature);
 		} catch (IOException ex) {
 			String msg = "Email could not be sent!";
 			if (ex instanceof HttpException) {

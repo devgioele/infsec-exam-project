@@ -5,6 +5,7 @@ import client.server.Server;
 import client.util.Jakarta;
 import client.util.UnauthorizedException;
 import http.Email;
+import http.JwtPayload;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -23,14 +24,15 @@ public class SentEmailsServlet extends HttpServlet {
 		Jakarta.disableCaching(response);
 
 		String jwt = Crypto.extractJwtCookie(request);
-		String email = Sanitize.noHtml(request.getParameter("email"));
+		JwtPayload payload = Crypto.validJwt(jwt);
+
 		try {
 			request.setAttribute("content", getContent(jwt));
 		} catch (UnauthorizedException ex) {
 			request.getRequestDispatcher("login.html").forward(request, response);
 			return;
 		}
-		request.setAttribute("email", email);
+		request.setAttribute("email", payload.email);
 		request.getRequestDispatcher("home.jsp").forward(request, response);
 	}
 
@@ -38,10 +40,7 @@ public class SentEmailsServlet extends HttpServlet {
 		Email[] sentEmails;
 		try {
 			sentEmails = Server.getInstance().loadSentEmails(jwt);
-		} catch (Exception ex) {
-			if (ex instanceof UnauthorizedException) {
-				throw (UnauthorizedException) ex;
-			}
+		} catch (IOException ex) {
 			return "ERROR IN FETCHING SENT EMAILS!";
 		}
 		StringBuilder output = new StringBuilder();
@@ -49,11 +48,16 @@ public class SentEmailsServlet extends HttpServlet {
 		int amount = 0;
 		for (Email e : sentEmails) {
 			amount++;
+			if(e.signature == null) {
+				output.append("<b style='color: grey'>Unsigned</b>");
+			} else {
+				output.append("<b style='color: blue'>Signed</b>");
+			}
 			output.append("<div style=\"white-space: pre-wrap;\"><span style=\"color:grey;\">")
-					.append("TO:&emsp;").append(e.sender).append("&emsp;&emsp;AT:&emsp;")
+					.append("TO:&emsp;").append(e.receiver).append("&emsp;&emsp;AT:&emsp;")
 					.append(e.time).append("</span>").append("<br><b>").append(e.subject)
-					.append("</b>\r\n").append("<br>").append(e.body).append("<br><br>")
-					.append(e.signature).append("</div>\r\n")
+					.append("</b>\r\n").append("<br>").append(e.body).append("<br><br>");
+			output.append("</div>\r\n")
 					.append("<hr style=\"border-top: 2px solid black;\">\r\n");
 		}
 		if (amount == 0) {

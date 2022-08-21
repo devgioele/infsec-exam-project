@@ -34,6 +34,7 @@ public class RegisterServlet extends HttpServlet {
 			ClientLogger.println("Registration succeeded!");
 			Crypto.setJwtCookie(response, jwt);
 			request.setAttribute("email", email);
+			request.setAttribute("content", "Welcome!");
 			request.getRequestDispatcher("home.jsp").forward(request, response);
 			return;
 		} catch (HttpException e) {

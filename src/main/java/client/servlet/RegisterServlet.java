@@ -37,11 +37,11 @@ public class RegisterServlet extends HttpServlet {
 			request.getRequestDispatcher("home.jsp").forward(request, response);
 			return;
 		} catch (HttpException e) {
-			ClientLogger.printlnErr("Registration failed:\n" + e.getUserMessage());
+			ClientLogger.println("Registration failed:\n" + e.getUserMessage());
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (UnauthorizedException e) {
-			ClientLogger.printlnErr("Registration failed:\n" + e.getMessage());
+			ClientLogger.println("Registration failed:\n" + e.getMessage());
 		}
 
 		// On error, stay on the registration page

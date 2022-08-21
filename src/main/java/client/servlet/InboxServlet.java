@@ -66,19 +66,25 @@ public class InboxServlet extends HttpServlet {
 					e.body = Crypto.decrypt(privateKey.get(), e.body);
 				} catch (CharacterCodingException ex) {
 					output.append(
-							"<b style='color: grey'>Email not encrypted or encrypted with a foreign public " +
-									"key.</b>");
+							"<b style='color: grey'>Email not encrypted with your public key" +
+									".</b>");
 				}
 			} else {
-				output.append("<p style='color: red'>Private key not found for decryption of email.</p>");
+				output.append(
+						"<p style='color: red'>Private key not found for decryption of email" +
+								".</p>");
 			}
+			// Sanitize content once decrypted
+			e.subject = Sanitize.noHtml(e.subject);
+			e.body = Sanitize.noHtml(e.body);
 			// Check existence of signature
-			if(e.signature == null) {
+			if (e.signature == null) {
 				output.append("<b style='color: grey'>Unsigned</b>");
 			} else {
 				// Verify signature
 				try {
-					if(Crypto.getInstance().isSignatureValid(e.sender, e.subject, e.body, e.signature, jwt)) {
+					if (Crypto.getInstance()
+							.isSignatureValid(e.sender, e.subject, e.body, e.signature, jwt)) {
 						output.append("<b style='color: blue'>Valid signature</b>");
 					} else {
 						output.append("<b style='color: red'>Invalid signature</b>");
@@ -87,7 +93,7 @@ public class InboxServlet extends HttpServlet {
 					output.append("<b style='color: orange'>Unknown signature</b>");
 				}
 			}
-			// Content of email
+			// Rest of email data
 			output.append("<div style=\"white-space: pre-wrap;\"><span style=\"color:grey;\">")
 					.append("FROM:&emsp;").append(e.sender).append("&emsp;&emsp;AT:&emsp;")
 					.append(e.time).append("</span><br><b>").append(e.subject)

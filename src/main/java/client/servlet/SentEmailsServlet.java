@@ -48,11 +48,16 @@ public class SentEmailsServlet extends HttpServlet {
 		int amount = 0;
 		for (Email e : sentEmails) {
 			amount++;
+			// Sanitize content
+			e.subject = Sanitize.noHtml(e.subject);
+			e.body = Sanitize.noHtml(e.body);
+			// Check signature presence
 			if(e.signature == null) {
 				output.append("<b style='color: grey'>Unsigned</b>");
 			} else {
 				output.append("<b style='color: blue'>Signed</b>");
 			}
+			// Rest of email data
 			output.append("<div style=\"white-space: pre-wrap;\"><span style=\"color:grey;\">")
 					.append("TO:&emsp;").append(e.receiver).append("&emsp;&emsp;AT:&emsp;")
 					.append(e.time).append("</span>").append("<br><b>").append(e.subject)

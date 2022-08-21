@@ -71,8 +71,6 @@ public class SendEmailServlet extends HttpServlet {
 		}
 
 		// Encrypt
-		ClientLogger.printf("Encrypting subject: %s%nWith public key: %s%n", subject,
-				publicKey.get());
 		subject = Crypto.encrypt(publicKey.get(), subject);
 		body = Crypto.encrypt(publicKey.get(), body);
 

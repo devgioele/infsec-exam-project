@@ -48,19 +48,22 @@ public class SendEmailServlet extends HttpServlet {
 		String body = Sanitize.safeHtml(request.getParameter("body"));
 		String timestamp = new Date(System.currentTimeMillis()).toInstant().toString();
 
-		if(Common.anyNull(sender, receiver, subject, body)) {
+		if (Common.anyNull(sender, receiver, subject, body)) {
 			response.setStatus(400);
 			return;
 		}
 
 		// Verify existence of receiver
-		try (ResultSet sqlRes = Database.query(conn,
-				"SELECT * FROM [user] WHERE email=?", receiver)) {
+		try (ResultSet sqlRes = Database.query(conn, "SELECT * FROM [user] WHERE email=?",
+				receiver)) {
 			if (sqlRes.next()) {
 				// Receiver exists, send email
 				try {
-					Database.update(conn, "INSERT INTO email ( sender, receiver, subject, body, signature, [time] ) " +
-							"VALUES ( ?, ?, ?, ?, ?, ? )", sender, receiver, subject, body, signature, timestamp);
+					Database.update(conn,
+							"INSERT INTO email ( sender, receiver, subject, body, signature, " +
+									"[time] ) " +
+									"VALUES ( ?, ?, ?, ?, ?, ? )", sender, receiver, subject, body,
+							signature, timestamp);
 					response.setStatus(200);
 				} catch (SQLException e) {
 					e.printStackTrace();

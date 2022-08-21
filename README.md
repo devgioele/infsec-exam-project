@@ -1,8 +1,18 @@
 # Information Security Project 2021/2022
 
-An email server and client implemented with Tomcat to test hacking techniques and to understand how to defend from such attacks. 
+An email server and client implemented with Tomcat to test hacking techniques and understand related defence methods. 
 
-Made at the [Free University of Bolzano](https://unibz.it).
+Made at the [Free University of Bolzano](https://unibz.it)
+
+## Features
+
+- JWT for authentication and authorization
+- End-to-end encryption of emails using RSA (SHA-256, with 4096 bits long keys)
+- Optional digital signature using DSA (SHA-256, with 4096 bits long keys)
+- Password hashing and salting (56 characters long salt encoded in base64)
+- SQL injection prevention
+- Reflected XSS and stored XSS prevention
+- Configuration files for both client and server settings
 
 ## Architecture
 

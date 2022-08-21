@@ -63,9 +63,11 @@ public class RegisterServlet extends HttpServlet {
 					response.getWriter().println(gson.toJson(new HttpError(msg)));
 					response.setStatus(400);
 				} else {
+					String salt = Crypto.genSalt();
+					String pwdSaltDigest = Crypto.getInstance().hashPwd(pwd, salt);
 					conn.setAutoCommit(false);
-					Database.update(conn, "INSERT INTO [user] ( name, surname, email, password )" +
-							" VALUES ( ?, ?, ?, ?)", name, surname, email, pwd);
+					Database.update(conn, "INSERT INTO [user] ( name, surname, email, password, salt )" +
+							" VALUES ( ?, ?, ?, ?, ? )", name, surname, email, pwdSaltDigest, salt);
 					Database.update(conn, "INSERT INTO public_key ( email, modulus, exponent )" +
 							" VALUES ( ?, ?, ? )", email, publicKey.modulus, publicKey.exponent);
 					conn.commit();

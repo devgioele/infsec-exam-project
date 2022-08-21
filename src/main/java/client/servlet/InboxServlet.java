@@ -79,7 +79,7 @@ public class InboxServlet extends HttpServlet {
 				// Verify signature
 				try {
 					if(Crypto.getInstance().isSignatureValid(e.sender, e.subject, e.body, e.signature, jwt)) {
-						output.append("<b style='color: blue'>Signed</b>");
+						output.append("<b style='color: blue'>Valid signature</b>");
 					} else {
 						output.append("<b style='color: red'>Invalid signature</b>");
 					}

@@ -40,15 +40,36 @@ public class LoginServlet extends HttpServlet {
 			return;
 		}
 
+		// Find salt and compute digest
+		String pwdSaltDigest = null;
 		try (ResultSet sqlRes = Database.query(conn,
-				"SELECT * FROM [user] WHERE email=? AND password=?", email, pwd)) {
+				"SELECT salt FROM [user] WHERE email=?", email)) {
+			if (sqlRes.next()) {
+				String salt = sqlRes.getString(1);
+				pwdSaltDigest = Crypto.getInstance().hashPwd(pwd, salt);
+			} else {
+				String msg = String.format("User '%s' does not exist!", email);
+				ServerLogger.println(msg);
+				response.getWriter().println(gson.toJson(new HttpError(msg)));
+				response.setStatus(401);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			response.setStatus(500);
+		}
+		if(pwdSaltDigest == null) {
+			return;
+		}
+
+		try (ResultSet sqlRes = Database.query(conn,
+				"SELECT * FROM [user] WHERE email=? AND password=?", email, pwdSaltDigest)) {
 			if (sqlRes.next()) {
 				String jwt = Crypto.getInstance().genJwt(email);
 				ServerLogger.println("Login succeeded!");
 				response.getWriter().println(gson.toJson(new Jwt(jwt)));
 				response.setStatus(200);
 			} else {
-				String msg = String.format("User '%s' does not exist or the credentials are incorrect!", email);
+				String msg = String.format("Wrong password for user '%s'!", email);
 				ServerLogger.println(msg);
 				response.getWriter().println(gson.toJson(new HttpError(msg)));
 				response.setStatus(401);

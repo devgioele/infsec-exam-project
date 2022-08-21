@@ -1,6 +1,6 @@
 -- One-liners for an easy pasting into the database shell
 
-CREATE TABLE [user] (name nvarchar(50) NOT NULL, surname nvarchar(50) NOT NULL, email nvarchar(50) NOT NULL, password nvarchar(50) NOT NULL, CONSTRAINT user_PK PRIMARY KEY (email));
+CREATE TABLE [user] (name nvarchar(50) NOT NULL, surname nvarchar(50) NOT NULL, email nvarchar(50) NOT NULL, password nchar(64) NOT NULL, salt nchar(56) NOT NULL, CONSTRAINT user_PK PRIMARY KEY (email));
 
 CREATE TABLE email (sender nvarchar(50) NOT NULL, receiver nvarchar(50) NOT NULL, subject ntext NULL, body ntext NOT NULL, signature ntext, [time] datetime2(3) NOT NULL, CONSTRAINT email_FK FOREIGN KEY (sender) REFERENCES [user] (email), CONSTRAINT email_FK_1 FOREIGN KEY (receiver) REFERENCES [user](email));
 

@@ -20,6 +20,7 @@ public class Crypto {
 	private static Crypto INSTANCE;
 
 	private final CryptoConfig config;
+	private final static SecureRandom secureRnd = new SecureRandom();
 
 	public static Crypto getInstance() {
 		if (INSTANCE == null) {
@@ -34,10 +35,10 @@ public class Crypto {
 		if (config == null) {
 			ServerLogger.println("Creating a new crypto config.");
 			ServerLogger.println("Creating a new secret for JWT signatures.");
-			SecureRandom rnd = new SecureRandom();
 			byte[] secret = new byte[100];
-			rnd.nextBytes(secret);
-			config = new CryptoConfig(secret, 60_000, HashingAlgorithm.SHA256);
+			secureRnd.nextBytes(secret);
+			config = new CryptoConfig(secret, 60_000, HashingAlgorithm.SHA256,
+					HashingAlgorithm.SHA256);
 			jsonToFile(config, pathConfig);
 		}
 		this.config = config;
@@ -53,12 +54,25 @@ public class Crypto {
 		return bearer.replaceFirst("^" + bearerPrefix, "");
 	}
 
-	private String genJwt(String email, HashingAlgorithm algorithm) throws NoSuchAlgorithmException {
+	/**
+	 * @return Random bytes encoded in base 64.
+	 * The length of the returned string will be 56, because base64 uses one character for every 6 bits
+	 * and the number of bytes used must be a multiple of 4.
+	 */
+	public static String genSalt() {
+		byte[] salt = new byte[40];
+		secureRnd.nextBytes(salt);
+		return Convert.toBase64(salt);
+	}
+
+	private String genJwt(String email, HashingAlgorithm algorithm)
+			throws NoSuchAlgorithmException {
 		JwtHeader header = new JwtHeader(config.jwtAlgorithm.toString());
 		JwtPayload payload = new JwtPayload(email, new Date().getTime() + config.jwtLifetime);
 		String headerPayload = Convert.toBase64Url(Convert.gson.toJson(header)) + "." +
 				Convert.toBase64Url(Convert.gson.toJson(payload));
-		String signature = hash(algorithm, headerPayload.getBytes(StandardCharsets.UTF_8), config.secret);
+		String signature =
+				hash(algorithm, headerPayload.getBytes(StandardCharsets.UTF_8), config.secret);
 		return headerPayload + "." + signature;
 	}
 
@@ -83,7 +97,8 @@ public class Crypto {
 		String signature = parts[2];
 		String headerPayload = encodedHeader + "." + encodedPayload;
 		// Verify signature
-		String localSignature = hash(algorithm, headerPayload.getBytes(StandardCharsets.UTF_8), config.secret);
+		String localSignature =
+				hash(algorithm, headerPayload.getBytes(StandardCharsets.UTF_8), config.secret);
 		if (!signature.equals(localSignature)) {
 			ServerLogger.printf("JWT with invalid signature.%nGot: %s%nBut expected: %s%n",
 					signature, localSignature);
@@ -111,6 +126,11 @@ public class Crypto {
 
 	public JwtPayload getJwtPayload(String jwt) {
 		return getJwtPayload(jwt, config.jwtAlgorithm);
+	}
+
+	public String hashPwd(String pwd, String salt) {
+		return util.Crypto.hash(config.passwordAlgorithm,
+				(pwd + salt).getBytes(StandardCharsets.UTF_8));
 	}
 
 }

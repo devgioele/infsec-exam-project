@@ -24,7 +24,8 @@ public class Convert {
 	}
 
 	public static String toBase64Url(String str) {
-		return Base64.getUrlEncoder().withoutPadding().encodeToString(str.getBytes(StandardCharsets.UTF_8));
+		return Base64.getUrlEncoder().withoutPadding()
+				.encodeToString(str.getBytes(StandardCharsets.UTF_8));
 	}
 
 
@@ -33,11 +34,15 @@ public class Convert {
 	}
 
 	public static String toBase64(BigInteger num) {
-		return new String(Base64.getEncoder().encode(num.toByteArray()));
+		return toBase64(num.toByteArray());
 	}
 
 	public static BigInteger fromBase64(String str) {
 		return new BigInteger(Base64.getDecoder().decode(str));
+	}
+
+	public static String toBase64(byte[] b) {
+		return new String(Base64.getEncoder().encode(b));
 	}
 
 }

@@ -6,7 +6,7 @@ Made at the [Free University of Bolzano](https://unibz.it)
 
 ## Features
 
-- JWT for authentication and authorization
+- JWT for authentication and authorization (using SHA-256)
 - End-to-end encryption of emails using RSA (SHA-256, with 4096 bits long keys)
 - Optional digital signature using DSA (SHA-256, with 4096 bits long keys)
 - Password hashing and salting (56 characters long salt encoded in base64)
